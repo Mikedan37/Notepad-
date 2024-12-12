@@ -9,9 +9,10 @@ import SwiftUI
 
 @main
 struct Notepad__App: App {
+    @StateObject private var documentManager = DocumentManager()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView().environmentObject(documentManager)
         }
     }
 }
