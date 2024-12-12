@@ -7,25 +7,27 @@ import SwiftUI
 import PencilKit
 
 struct EditorView: View {
-    @Binding var item: EditorItem // Item being edited
+    @Binding var item: EditorItem // Binding to the item being edited
     @State private var drawing = PKDrawing() // Current drawing content
 
     var body: some View {
         VStack {
             if item.type == .text {
-                TextEditor(text: $item.content)
+                TextEditor(text: $item.content) // Edit text
                     .padding()
             } else if item.type == .drawing {
                 DrawingCanvas(drawing: $drawing)
                     .onAppear {
-                        // Load drawing from item if available
                         if let data = item.drawing {
-                            drawing = (try? PKDrawing(data: data)) ?? PKDrawing()
+                            DispatchQueue.main.async {
+                                drawing = (try? PKDrawing(data: data)) ?? PKDrawing()
+                            }
                         }
                     }
                     .onDisappear {
-                        // Save drawing to item when leaving
-                        item.drawing = try? drawing.dataRepresentation()
+                        DispatchQueue.main.async {
+                            item.drawing = try? drawing.dataRepresentation()
+                        }
                     }
             }
         }

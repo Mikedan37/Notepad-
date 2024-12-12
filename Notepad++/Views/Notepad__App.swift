@@ -8,11 +8,13 @@
 import SwiftUI
 
 @main
-struct Notepad__App: App {
+struct NotepadApp: App { // Remove the double underscore for cleaner naming
     @StateObject private var documentManager = DocumentManager()
+
     var body: some Scene {
         WindowGroup {
-            ContentView().environmentObject(documentManager)
+            ContentView()
+                .environmentObject(documentManager) // Properly attach the environment object
         }
     }
 }
