@@ -1,14 +1,7 @@
-//
-//  ContentView.swift
-//  Notepad++
-//
-//  Created by Michael Danylchuk on 12/11/24.
 import SwiftUI
 
 struct ContentView: View {
-    @State private var items: [EditorItem] = []
-    @State private var showEditor = false
-    @State private var selectedItem: EditorItem? = nil
+    @StateObject private var noteManager = NoteManager()
 
     var body: some View {
         NavigationStack {
@@ -17,9 +10,16 @@ struct ContentView: View {
                     .ignoresSafeArea()
                 
                 List {
-                    ForEach($items) { $item in
+                    ForEach(noteManager.items) { item in
                         NavigationLink(
-                            destination: EditorView(item: $item)
+                            destination: EditorView(item: Binding(
+                                get: { item },
+                                set: { updatedItem in
+                                    if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                                        noteManager.items[index] = updatedItem
+                                    }
+                                }
+                            ))
                         ) {
                             HStack {
                                 Image(systemName: item.type.systemImage)
@@ -27,17 +27,27 @@ struct ContentView: View {
                             }
                         }
                     }
+                    .onDelete(perform: deleteItem) // Fixed `.onDelete`
                 }
-                //.scrollContentBackground(.hidden) // Remove list background
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button("New Drawing") {
+                        Button(action: {
                             addItem(type: .drawing)
+                        }) {
+                            HStack {
+                                Text("New Drawing")
+                                Image(systemName: "pencil.and.scribble")
+                            }
                         }
-                        Button("New Text") {
+                        Button(action: {
                             addItem(type: .text)
+                        }) {
+                            HStack {
+                                Text("New Text")
+                                Image(systemName: "textformat.alt")
+                            }
                         }
                     } label: {
                         HStack {
@@ -67,11 +77,13 @@ struct ContentView: View {
             content: type == .text ? "" : "",
             drawing: nil
         )
-        items.append(newItem)
+        noteManager.items.append(newItem)
+        noteManager.saveItems() // Save immediately after adding
     }
 
     func deleteItem(at offsets: IndexSet) {
-        items.remove(atOffsets: offsets)
+        noteManager.items.remove(atOffsets: offsets)
+        noteManager.saveItems() // Save changes immediately after deleting
     }
     
     /// Configure the navigation bar appearance
@@ -79,7 +91,7 @@ struct ContentView: View {
         let appearance = UINavigationBarAppearance()
         
         // Set the background color for the navigation bar
-        appearance.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.6)
+        appearance.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.7)
         
         // Customize title attributes
         appearance.titleTextAttributes = [

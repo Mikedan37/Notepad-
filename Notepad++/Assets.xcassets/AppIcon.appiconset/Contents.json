@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "Screenshot 2024-12-29 at 2.53.59 PM 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -12,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "Screenshot 2024-12-29 at 2.53.59 PM.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -23,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "Screenshot 2024-12-29 at 2.53.59 PM 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

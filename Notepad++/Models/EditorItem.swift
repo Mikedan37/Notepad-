@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct EditorItem: Identifiable, Equatable {
+struct EditorItem: Identifiable, Equatable, Codable {
     let id: UUID
     var title: String
     var type: EditorItemType
@@ -13,7 +13,7 @@ struct EditorItem: Identifiable, Equatable {
     var drawing: Data? // Holds serialized drawing data for drawing items
 }
 
-enum EditorItemType {
+enum EditorItemType: String, Codable {
     case drawing
     case text
 
