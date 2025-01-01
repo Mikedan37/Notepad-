@@ -11,6 +11,7 @@ struct EditorItem: Identifiable, Equatable, Codable {
     var type: EditorItemType
     var content: String // Holds text for text items
     var drawing: Data? // Holds serialized drawing data for drawing items
+    var isPinned: Bool = false
 }
 
 enum EditorItemType: String, Codable {

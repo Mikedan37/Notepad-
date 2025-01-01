@@ -2,32 +2,76 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var noteManager = NoteManager()
-
+    @State private var renamingItem: EditorItem? // Tracks renamed item
+    @State private var isRenameAlertPresented = false // Controls the alert visibility
+    @State private var isDragging: Bool = false
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.gray.opacity(0.2) // Background for entire view
+                Color.black.opacity(0.2) // Background for entire view
                     .ignoresSafeArea()
-                
-                List {
-                    ForEach(noteManager.items) { item in
-                        NavigationLink(
-                            destination: EditorView(item: Binding(
-                                get: { item },
-                                set: { updatedItem in
-                                    if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
-                                        noteManager.items[index] = updatedItem
+                VStack{
+                    if !noteManager.items.filter({ $0.isPinned }).isEmpty || isDragging {
+                        // Display pinned items
+                        VStack {
+                            // Pinned notes UI
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 16) {
+                                    ForEach(noteManager.items.filter({ $0.isPinned })) { item in
+                                        VStack {
+                                            Circle()
+                                                .fill(Color.blue.opacity(0.8))
+                                                .frame(width: 60, height: 60)
+                                                .overlay(
+                                                    Text(item.title.prefix(1))
+                                                        .font(.headline)
+                                                        .foregroundColor(.white)
+                                                )
+                                            Text(item.title)
+                                                .font(.caption)
+                                                .lineLimit(1)
+                                        }
                                     }
                                 }
-                            ))
-                        ) {
-                            HStack {
-                                Image(systemName: item.type.systemImage)
-                                Text(item.title)
-                            }
+                                .padding(.horizontal)
+                            }.padding([.bottom,.top],5).padding(.top,10)
                         }
                     }
-                    .onDelete(perform: deleteItem) // Fixed `.onDelete`
+                    List {
+                        ForEach(noteManager.items) { item in
+                            NavigationLink(
+                                destination: EditorView(item: Binding(
+                                    get: { item },
+                                    set: { updatedItem in
+                                        DispatchQueue.main.async {
+                                            if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                                                noteManager.items[index] = updatedItem
+                                            }
+                                        }
+                                    }
+                                ))
+                            ) {
+                                HStack {
+                                    Image(systemName: item.type.systemImage ?? "exclamationmark.triangle")
+                                    Text(item.title)
+                                }
+                            }
+                            .contextMenu{
+                                Button(action: {
+                                    renameItem(item:item)
+                                }) {
+                                    Label("Rename", systemImage: "pencil")
+                                }
+                                Button(action: {
+                                    togglePin(item: item)
+                                }) {
+                                    Label(item.isPinned ? "Unpin from Favorites" : "Pin to Favorites", systemImage: item.isPinned ? "pin.slash" : "pin")
+                                }
+                            }
+                        }
+                        .onDelete(perform: deleteItem) // Fixed `.onDelete`
+                    }.listStyle(PlainListStyle())
                 }
             }
             .toolbar {
@@ -65,6 +109,23 @@ struct ContentView: View {
             .onAppear {
                 configureNavigationBarAppearance()
             }
+            .alert("Rename Note", isPresented: $isRenameAlertPresented, actions: {
+                            TextField("Enter new name", text: Binding(
+                                get: { renamingItem?.title ?? "" },
+                                set: { renamingItem?.title = $0 }
+                            ))
+                            Button("Save", action: {
+                                if let renamingItem = renamingItem,
+                                   let index = noteManager.items.firstIndex(where: { $0.id == renamingItem.id }) {
+                                    noteManager.items[index].title = renamingItem.title
+                                    noteManager.saveItems() // Save changes to disk
+                                }
+                                self.renamingItem = nil
+                            })
+                            Button("Cancel", role: .cancel) {
+                                self.renamingItem = nil
+                            }
+                        })
         }
         .accentColor(.white)
     }
@@ -82,8 +143,26 @@ struct ContentView: View {
     }
 
     func deleteItem(at offsets: IndexSet) {
-        noteManager.items.remove(atOffsets: offsets)
-        noteManager.saveItems() // Save changes immediately after deleting
+        let validOffsets = offsets.filter { $0 < noteManager.items.count }
+         validOffsets.forEach { noteManager.items.remove(at: $0) }
+         noteManager.saveItems()
+    }
+    
+    func renameItem(item: EditorItem){
+        renamingItem = item
+        isRenameAlertPresented = true
+    }
+    
+    func togglePin(item: EditorItem) {
+        if let index = noteManager.items.firstIndex(where: { $0.id == item.id }) {
+            noteManager.items[index].isPinned.toggle()
+            if noteManager.items[index].isPinned {
+                noteManager.pinnedItems.append(noteManager.items[index])
+            } else {
+                noteManager.pinnedItems.removeAll { $0.id == item.id }
+            }
+            noteManager.saveItems() // Save changes to disk
+        }
     }
     
     /// Configure the navigation bar appearance
@@ -112,6 +191,11 @@ struct ContentView: View {
     }
 }
 
-#Preview{
-    ContentView()
+#Preview {
+    let mockManager = NoteManager()
+    mockManager.items = [
+        EditorItem(id: UUID(), title: "Sample Text", type: .text, content: "This is a sample note."),
+        EditorItem(id: UUID(), title: "Sample Drawing", type: .drawing, content: "")
+    ]
+    return ContentView().environmentObject(mockManager)
 }
