@@ -4,7 +4,8 @@ struct ContentView: View {
     @StateObject private var noteManager = NoteManager()
     @State private var renamingItem: EditorItem? // Tracks renamed item
     @State private var isRenameAlertPresented = false // Controls the alert visibility
-    @State private var isDragging: Bool = false
+    @State private var expandedFolders: Set<UUID> = [] // Track expanded folder IDs
+    @State private var searchText: String = ""
     
     var body: some View {
         NavigationStack {
@@ -12,25 +13,38 @@ struct ContentView: View {
                 Color.black.opacity(0.2) // Background for entire view
                     .ignoresSafeArea()
                 VStack{
-                    if !noteManager.items.filter({ $0.isPinned }).isEmpty || isDragging {
+                    if !noteManager.items.filter({ $0.isPinned }).isEmpty {
                         // Display pinned items
                         VStack {
                             // Pinned notes UI
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 16) {
                                     ForEach(noteManager.items.filter({ $0.isPinned })) { item in
-                                        VStack {
-                                            Circle()
-                                                .fill(Color.blue.opacity(0.8))
-                                                .frame(width: 60, height: 60)
-                                                .overlay(
-                                                    Text(item.title.prefix(1))
-                                                        .font(.headline)
-                                                        .foregroundColor(.white)
-                                                )
-                                            Text(item.title)
-                                                .font(.caption)
-                                                .lineLimit(1)
+                                        NavigationLink(
+                                            destination: EditorView(item: Binding(
+                                                get: { item },
+                                                set: { updatedItem in
+                                                    DispatchQueue.main.async {
+                                                        if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                                                            noteManager.items[index] = updatedItem
+                                                        }
+                                                    }
+                                                }
+                                            ))
+                                        ) {
+                                            VStack {
+                                                Circle()
+                                                    .fill(Color.blue.opacity(0.8))
+                                                    .frame(width: 60, height: 60)
+                                                    .overlay(
+                                                        Text(item.title.prefix(1))
+                                                            .font(.headline)
+                                                            .foregroundColor(.white)
+                                                    )
+                                                Text(item.title)
+                                                    .font(.caption)
+                                                    .lineLimit(1)
+                                            }
                                         }
                                     }
                                 }
@@ -39,7 +53,7 @@ struct ContentView: View {
                         }
                     }
                     List {
-                        ForEach(noteManager.items) { item in
+                        ForEach(noteManager.items.filter {item in searchText.isEmpty || item.title.localizedCaseInsensitiveContains(searchText)}) { item in
                             NavigationLink(
                                 destination: EditorView(item: Binding(
                                     get: { item },
@@ -59,6 +73,13 @@ struct ContentView: View {
                             }
                             .contextMenu{
                                 Button(action: {
+//                                    if let folder = noteManager.folders.first { // Choose a folder here
+//                                        noteManager.moveNoteToFolder(note: item, folder: folder)
+//                                    }
+                                }) {
+                                    Label("Move to Folder", systemImage: "folder")
+                                }
+                                Button(action: {
                                     renameItem(item:item)
                                 }) {
                                     Label("Rename", systemImage: "pencil")
@@ -71,7 +92,9 @@ struct ContentView: View {
                             }
                         }
                         .onDelete(perform: deleteItem) // Fixed `.onDelete`
-                    }.listStyle(PlainListStyle())
+                    }
+                    .listStyle(PlainListStyle())
+                    .searchable(text: $searchText , placement: .navigationBarDrawer)
                 }
             }
             .toolbar {
@@ -164,6 +187,50 @@ struct ContentView: View {
             noteManager.saveItems() // Save changes to disk
         }
     }
+    
+    func addFolder() {
+        let newFolder = Folder(id: UUID(), title: "New Folder", notes: [])
+        noteManager.folders.append(newFolder)
+        noteManager.saveItems()
+    }
+    
+    func deleteNoteFromFolder(note: EditorItem, folder: Folder) {
+        if let folderIndex = noteManager.folders.firstIndex(where: { $0.id == folder.id }),
+           let noteIndex = noteManager.folders[folderIndex].notes.firstIndex(where: { $0.id == note.id }) {
+            noteManager.folders[folderIndex].notes.remove(at: noteIndex)
+            noteManager.saveItems()
+        }
+    }
+    
+    func toggleFolderExpansion(folder: Folder) {
+        if expandedFolders.contains(folder.id) {
+            expandedFolders.remove(folder.id)
+        } else {
+            expandedFolders.insert(folder.id)
+        }
+    }
+    
+    func moveNoteToFolder(note: EditorItem, folder: Folder) {
+        // Find the folder to which the note will be moved
+        guard let targetFolderIndex = noteManager.folders.firstIndex(where: { $0.id == folder.id }) else {
+            print("Target folder not found.")
+            return
+        }
+
+        // Append the note to the target folder's notes
+        noteManager.folders[targetFolderIndex].notes.append(note)
+
+        // Remove the note from the noteManager.items list if it exists there
+        if let noteIndex = noteManager.items.firstIndex(where: { $0.id == note.id }) {
+            noteManager.items.remove(at: noteIndex)
+        } else {
+            print("Note not found in noteManager.items. Make sure the source collection is correct.")
+        }
+
+        // Save changes to the noteManager
+        noteManager.saveItems()
+    }
+    
     
     /// Configure the navigation bar appearance
     private func configureNavigationBarAppearance() {

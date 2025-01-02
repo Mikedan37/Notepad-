@@ -10,7 +10,13 @@ import SwiftUI
 class NoteManager: ObservableObject {
     @Published var items: [EditorItem] = [] // Regular Notes
     @Published var pinnedItems: [EditorItem] = [] // Pinned Notes
+    @Published var folders: [Folder] = [] // Stores folders with their notes
+    
     private var saveWorkItem: DispatchWorkItem?
+    
+    private var folderFileURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("folders.json")
+    }
     
     private var regularFileURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("notes.json")
@@ -34,9 +40,11 @@ class NoteManager: ObservableObject {
                do {
                    let regularData = try JSONEncoder().encode(self.items)
                    let pinnedData = try JSONEncoder().encode(self.pinnedItems)
+                   let folderData = try JSONEncoder().encode(self.folders)
                    
                    try regularData.write(to: self.regularFileURL)
                    try pinnedData.write(to: self.pinnedFileURL)
+                   try folderData.write(to: self.folderFileURL)
                } catch {
                    print("Failed to save items: \(error.localizedDescription)")
                }
@@ -62,7 +70,13 @@ class NoteManager: ObservableObject {
                            self.pinnedItems = decodedPinnedItems
                        }
                    }
-
+                   
+                   if let folderData = try? Data(contentsOf: self.folderFileURL) {
+                                 let decodedFolders = try JSONDecoder().decode([Folder].self, from: folderData)
+                                 DispatchQueue.main.async {
+                                     self.folders = decodedFolders
+                                 }
+                             }
                    print("Items loaded successfully.")
                } catch {
                    DispatchQueue.main.async {
