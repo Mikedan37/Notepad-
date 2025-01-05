@@ -26,7 +26,7 @@ struct EditorView: View {
                     }
                     .onDisappear {
                         DispatchQueue.main.async {
-                            item.drawing = try? drawing.dataRepresentation()
+                            item.drawing = drawing.dataRepresentation()
                         }
                     }
             }
