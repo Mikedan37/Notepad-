@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 73;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -29,10 +29,31 @@
 		905360B82D0A80D800DA5012 /* Notepad++UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Notepad++UITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		90D721DE2D658D240075637D /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Planning_V1/CurrentBugs.md,
+			);
+			target = 905360B72D0A80D800DA5012 /* Notepad++UITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		90D721DF2D658D240075637D /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 905360B42D0A80D800DA5012 /* Sources */;
+			membershipExceptions = (
+				Planning_V1/CurrentBugs.md,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		905360A02D0A80D400DA5012 /* Notepad++ */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Notepad++"; sourceTree = "<group>"; };
 		905360B12D0A80D800DA5012 /* Notepad++Tests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Notepad++Tests"; sourceTree = "<group>"; };
 		905360BB2D0A80D800DA5012 /* Notepad++UITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Notepad++UITests"; sourceTree = "<group>"; };
+		90D721D32D658A320075637D /* Notepad++Notes */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (90D721DE2D658D240075637D /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 90D721DF2D658D240075637D /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "Notepad++Notes"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,8 +85,9 @@
 			isa = PBXGroup;
 			children = (
 				905360A02D0A80D400DA5012 /* Notepad++ */,
-				905360B12D0A80D800DA5012 /* Notepad++Tests */,
 				905360BB2D0A80D800DA5012 /* Notepad++UITests */,
+				905360B12D0A80D800DA5012 /* Notepad++Tests */,
+				90D721D32D658A320075637D /* Notepad++Notes */,
 				9053609F2D0A80D400DA5012 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -143,6 +165,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				905360BB2D0A80D800DA5012 /* Notepad++UITests */,
+				90D721D32D658A320075637D /* Notepad++Notes */,
 			);
 			name = "Notepad++UITests";
 			packageProductDependencies = (
@@ -175,7 +198,6 @@
 				};
 			};
 			buildConfigurationList = 905360992D0A80D400DA5012 /* Build configuration list for PBXProject "Notepad++" */;
-			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -183,6 +205,7 @@
 				Base,
 			);
 			mainGroup = 905360952D0A80D400DA5012;
+			preferredProjectObjectVersion = 60;
 			productRefGroup = 9053609F2D0A80D400DA5012 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -386,8 +409,10 @@
 				DEVELOPMENT_TEAM = M7PB4PDJAS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Notepad---Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Notepad++";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "This app uses Apple Pencil and PencilKit.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -418,8 +443,10 @@
 				DEVELOPMENT_TEAM = M7PB4PDJAS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Notepad---Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Notepad++";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "This app uses Apple Pencil and PencilKit.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

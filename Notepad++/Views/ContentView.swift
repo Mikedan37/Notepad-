@@ -1,22 +1,26 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var noteManager = NoteManager()
+    @EnvironmentObject var noteManager: NoteManager
     @State private var renamingItem: EditorItem? // Tracks renamed item
     @State private var isRenameAlertPresented = false // Controls the alert visibility
     @State private var expandedFolders: Set<UUID> = [] // Track expanded folder IDs
     @State private var searchText: String = ""
     
+    init(){
+        UITableView.appearance().backgroundColor = .clear
+        UITableViewCell.appearance().backgroundColor = .clear
+    }
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.opacity(0.2) // Background for entire view
+                Color.black.opacity(0.9) // Background for entire view
                     .ignoresSafeArea()
                 VStack{
                     if !noteManager.items.filter({ $0.isPinned }).isEmpty {
                         // Display pinned items
                         ZStack{
-                            RoundedRectangle(cornerRadius: 10).foregroundStyle(.gray).brightness(-0.45)
+                            RoundedRectangle(cornerRadius: 10).foregroundStyle(.clear)
                             VStack {
                                 // Pinned notes UI
                                 ScrollView(.horizontal, showsIndicators: false) {
@@ -36,7 +40,7 @@ struct ContentView: View {
                                             ) {
                                                 VStack {
                                                     Circle()
-                                                        .fill(Color.yellow.opacity(0.8)).brightness(-0.2)
+                                                        .fill(Color.yellow.opacity(0.8)).brightness(0.1)
                                                         .frame(width: 60, height: 60)
                                                         .overlay(
                                                             Text(item.title.prefix(1))
@@ -59,50 +63,104 @@ struct ContentView: View {
                                     .padding(.horizontal,10).padding([.bottom,.top],5)
                                 }.padding([.bottom,.top],5)
                             }
-                        }.frame(height:90).padding(.horizontal,18).padding(.top, 15).padding(.bottom,5)
+                        }.frame(height:90).padding(.horizontal,15).padding(.top, 15).padding(.bottom,5)
                     }
-                    List {
-                        ForEach(noteManager.items.filter {item in searchText.isEmpty || item.title.localizedCaseInsensitiveContains(searchText)}) { item in
-                            NavigationLink(
-                                destination: EditorView(item: Binding(
-                                    get: { item },
-                                    set: { updatedItem in
-                                        DispatchQueue.main.async {
-                                            if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
-                                                noteManager.items[index] = updatedItem
+                    ZStack{
+                        Color.clear.ignoresSafeArea()
+                        List {
+                            if noteManager.items.contains(where: { $0.type == .text }) {
+                                Section(header: Text("Documents").foregroundStyle(.white).bold()){
+                                    ForEach(noteManager.items.filter {item in (searchText.isEmpty || item.title.localizedCaseInsensitiveContains(searchText)) && (item.type == .text)}) { item in
+                                        
+                                        NavigationLink(
+                                            destination: EditorView(item: Binding(
+                                                get: { item },
+                                                set: { updatedItem in
+                                                    DispatchQueue.main.async {
+                                                        if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                                                            noteManager.items[index] = updatedItem
+                                                        }
+                                                    }
+                                                }
+                                            ))
+                                        ) {
+                                            HStack {
+                                                Image(systemName: item.type.systemImage)
+                                                Text(item.title)
+                                            }.foregroundColor(.white)
+                                        }.listRowBackground(Color.clear)
+                                            .contextMenu{
+                                                //                                Button(action: {
+                                                ////                                    if let folder = noteManager.folders.first { // Choose a folder here
+                                                ////                                        noteManager.moveNoteToFolder(note: item, folder: folder)
+                                                ////                                    }
+                                                //                                }) {
+                                                //                                    Label("Move to Folder", systemImage: "folder")
+                                                //                                }
+                                                Button(action: {
+                                                    renameItem(item:item)
+                                                }) {
+                                                    Label("Rename", systemImage: "pencil")
+                                                }
+                                                Button(action: {
+                                                    togglePin(item: item)
+                                                }) {
+                                                    Label(item.isPinned ? "Unpin from Favorites" : "Pin to Favorites", systemImage: item.isPinned ? "pin.slash" : "pin")
+                                                }
                                             }
-                                        }
-                                    }
-                                ))
-                            ) {
-                                HStack {
-                                    Image(systemName: item.type.systemImage)
-                                    Text(item.title)
+                                        
+                                        
+                                    }.onDelete(perform: deleteItem) // Fixed `.onDelete`
+                                    //.filter{$0.type == .text}
                                 }
                             }
-                            .contextMenu{
-//                                Button(action: {
-////                                    if let folder = noteManager.folders.first { // Choose a folder here
-////                                        noteManager.moveNoteToFolder(note: item, folder: folder)
-////                                    }
-//                                }) {
-//                                    Label("Move to Folder", systemImage: "folder")
-//                                }
-                                Button(action: {
-                                    renameItem(item:item)
-                                }) {
-                                    Label("Rename", systemImage: "pencil")
-                                }
-                                Button(action: {
-                                    togglePin(item: item)
-                                }) {
-                                    Label(item.isPinned ? "Unpin from Favorites" : "Pin to Favorites", systemImage: item.isPinned ? "pin.slash" : "pin")
+                            if noteManager.items.contains(where: { $0.type == .drawing }) {
+                                Section(header: Text("Drawings").foregroundStyle(.white).bold()){
+                                    ForEach(noteManager.items.filter {item in (searchText.isEmpty || item.title.localizedCaseInsensitiveContains(searchText)) && (item.type == .drawing)}) { item in
+                                        NavigationLink(
+                                            destination: EditorView(item: Binding(
+                                                get: { item },
+                                                set: { updatedItem in
+                                                    DispatchQueue.main.async {
+                                                        if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                                                            noteManager.items[index] = updatedItem
+                                                        }
+                                                    }
+                                                }
+                                            ))
+                                        ) {
+                                            HStack {
+                                                Image(systemName: item.type.systemImage)
+                                                Text(item.title)
+                                            }.foregroundColor(.white)
+                                        }.listRowBackground(Color.clear)
+                                            .contextMenu{
+                                                //                                Button(action: {
+                                                ////                                    if let folder = noteManager.folders.first { // Choose a folder here
+                                                ////                                        noteManager.moveNoteToFolder(note: item, folder: folder)
+                                                ////                                    }
+                                                //                                }) {
+                                                //                                    Label("Move to Folder", systemImage: "folder")
+                                                //                                }
+                                                Button(action: {
+                                                    renameItem(item:item)
+                                                }) {
+                                                    Label("Rename", systemImage: "pencil")
+                                                }
+                                                Button(action: {
+                                                    togglePin(item: item)
+                                                }) {
+                                                    Label(item.isPinned ? "Unpin from Favorites" : "Pin to Favorites", systemImage: item.isPinned ? "pin.slash" : "pin")
+                                                }
+                                            }
+                                    }.onDelete(perform: deleteItem) // Fixed `.onDelete`
+                                    //.filter{$0.type == .drawing}
                                 }
                             }
                         }
-                        .onDelete(perform: deleteItem) // Fixed `.onDelete`
+                        .searchable(text: $searchText , placement: .navigationBarDrawer)
+                        .listStyle(GroupedListStyle()).background(Color.clear).scrollContentBackground(.hidden)
                     }
-                    .searchable(text: $searchText , placement: .navigationBarDrawer)
                 }
             }
             .toolbar {
@@ -131,7 +189,6 @@ struct ContentView: View {
                                 .frame(width: 25, height: 25)
                                 .foregroundColor(.white)
                         }
-                        .padding(8)
                     }
                 }
             }
@@ -159,6 +216,14 @@ struct ContentView: View {
                         })
         }
         .accentColor(.white)
+    }
+    
+    private func updateItem(_ updatedItem: EditorItem) {
+        DispatchQueue.main.async {
+            if let index = noteManager.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                noteManager.items[index] = updatedItem
+            }
+        }
     }
 
     func addItem(type: EditorItemType) {
@@ -245,8 +310,8 @@ struct ContentView: View {
         let appearance = UINavigationBarAppearance()
         
         // Set the background color for the navigation bar
-        appearance.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.7)
-        
+        appearance.backgroundColor = UIColor.systemYellow.withAlphaComponent(0.77)
+       
         // Customize title attributes
         appearance.titleTextAttributes = [
             .foregroundColor: UIColor.white,

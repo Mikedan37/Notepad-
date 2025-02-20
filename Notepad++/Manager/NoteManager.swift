@@ -14,9 +14,9 @@ class NoteManager: ObservableObject {
     
     private var saveWorkItem: DispatchWorkItem?
     
-    private var folderFileURL: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("folders.json")
-    }
+//    private var folderFileURL: URL {
+//        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("folders.json")
+//    }
     
     private var regularFileURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("notes.json")
@@ -32,23 +32,49 @@ class NoteManager: ObservableObject {
     }
     
     deinit {
+        saveItems()
         removeLifecycleObservers()
     }
     
     func saveItems() {
         DispatchQueue.global(qos: .background).async {
-               do {
-                   let regularData = try JSONEncoder().encode(self.items)
-                   let pinnedData = try JSONEncoder().encode(self.pinnedItems)
-                   let folderData = try JSONEncoder().encode(self.folders)
-                   
-                   try regularData.write(to: self.regularFileURL)
-                   try pinnedData.write(to: self.pinnedFileURL)
-                   try folderData.write(to: self.folderFileURL)
-               } catch {
-                   print("Failed to save items: \(error.localizedDescription)")
-               }
-           }
+            do {
+                let regularData = try JSONEncoder().encode(self.items)
+                print("✅ Successfully encoded regular items.")
+
+                let pinnedData = try JSONEncoder().encode(self.pinnedItems)
+                print("✅ Successfully encoded pinned items.")
+
+//                let folderData = try JSONEncoder().encode(self.folders)
+//                print("✅ Successfully encoded folders.")
+
+                try self.ensureDirectoryExists()
+
+                try regularData.write(to: self.regularFileURL, options: .atomic)
+                print("📁 Successfully wrote regular notes.")
+
+                try pinnedData.write(to: self.pinnedFileURL, options: .atomic)
+                print("📁 Successfully wrote pinned notes.")
+
+//                try folderData.write(to: self.folderFileURL, options: .atomic)
+//                print("📁 Successfully wrote folders.")
+
+            } catch {
+                print("❌ Failed to save items: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func ensureDirectoryExists() {
+        let directory = self.regularFileURL.deletingLastPathComponent()
+        if !FileManager.default.fileExists(atPath: directory.path) {
+            do {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
+                print("📂 Directory created successfully.")
+            } catch {
+                print("❌ Failed to create directory: \(error.localizedDescription)")
+            }
+        }
     }
 
 
@@ -60,6 +86,7 @@ class NoteManager: ObservableObject {
                        let decodedRegularItems = try JSONDecoder().decode([EditorItem].self, from: regularData)
                        DispatchQueue.main.async {
                            self.items = decodedRegularItems
+                           print("Regular Item loaded")
                        }
                    }
 
@@ -68,16 +95,22 @@ class NoteManager: ObservableObject {
                        let decodedPinnedItems = try JSONDecoder().decode([EditorItem].self, from: pinnedData)
                        DispatchQueue.main.async {
                            self.pinnedItems = decodedPinnedItems
+                           print("Pinned Item loaded")
                        }
                    }
                    
-                   if let folderData = try? Data(contentsOf: self.folderFileURL) {
-                                 let decodedFolders = try JSONDecoder().decode([Folder].self, from: folderData)
-                                 DispatchQueue.main.async {
-                                     self.folders = decodedFolders
-                                 }
-                             }
-                   print("Items loaded successfully.")
+//                   if let folderData = try? Data(contentsOf: self.folderFileURL) {
+//                                 let decodedFolders = try JSONDecoder().decode([Folder].self, from: folderData)
+//                                 DispatchQueue.main.async {
+//                                     self.folders = decodedFolders
+//                                     print("Folder Item loaded")
+//                                 }
+//                             }
+                   
+                   DispatchQueue.main.async{
+                       print("Items loaded successfully.")
+                   }
+                   
                } catch {
                    DispatchQueue.main.async {
                        print("Failed to load items: \(error.localizedDescription)")
