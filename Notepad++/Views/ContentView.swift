@@ -232,7 +232,7 @@ struct ContentView: View {
             title: "New \(type == .text ? "Text" : "Drawing")",
             type: type,
             content: type == .text ? "" : "",
-            drawing: nil
+            pages: [PageModel()] // ✅ Ensure every new note starts with at least one page
         )
         noteManager.items.append(newItem)
         noteManager.saveItems() // Save immediately after adding
@@ -334,8 +334,20 @@ struct ContentView: View {
 #Preview {
     let mockManager = NoteManager()
     mockManager.items = [
-        EditorItem(id: UUID(), title: "Sample Text", type: .text, content: "This is a sample note."),
-        EditorItem(id: UUID(), title: "Sample Drawing", type: .drawing, content: "")
+        EditorItem(
+            id: UUID(),
+            title: "Sample Text",
+            type: .text,
+            content: "This is a sample note.",
+            pages: [PageModel()] // ✅ Ensure pages is initialized correctly
+        ),
+        EditorItem(
+            id: UUID(),
+            title: "Sample Drawing",
+            type: .drawing,
+            content: "",
+            pages: [PageModel()] // ✅ Ensure pages is initialized correctly
+        )
     ]
-    return ContentView().environmentObject(mockManager)
+    return ContentView().environmentObject(mockManager) // ✅ Explicitly return the view
 }
